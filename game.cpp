@@ -6,7 +6,7 @@
 #include <thread>
 #include <vector>
 #include <queue>
-#include <mutex>
+#include <mutex> 
 #include <sstream>
 #include <atomic>
 #include <algorithm>
@@ -35,7 +35,7 @@ public:
         : callSign(cs), fuel(f), timeSinceRequest(0),
           timeToLand(0), priority(0), landingDuration(0), permissionToLand(false)
     {
-        landingDuration = 3 + (rand() % 8);
+        landingDuration = 3 + (rand() % 8); //landingDuration set randombly between 3 to 10 seconds.
     }
 };
 
@@ -143,7 +143,7 @@ string generateCallSign() {
         cs.push_back('A' + rand() % 26);
     }
     return cs;
-}
+} //random 4 letters for callsign of the planes
 
 int lastFuel = -1;
 Plane* generatePlane() {
@@ -164,11 +164,11 @@ void resortLandingQueue(DoublyLinkedList &landingQueue) {
     }
     sort(planes.begin(), planes.end(), [](Plane* a, Plane* b) {
         return a->priority < b->priority;
-    });
+    }); //lamba comparator has been used here to arrange plane in ascending order of priority
     landingQueue.clear();
     for (Plane* p : planes)
         landingQueue.push_back(p);
-}
+} //landing queue is reordered based on the priority of the planes in it. 
 
 void updateLandingQueuePriorities(DoublyLinkedList &landingQueue) {
     int newPriority = 0;
@@ -182,7 +182,7 @@ void updateLandingQueuePriorities(DoublyLinkedList &landingQueue) {
 
 void display(const DoublyLinkedList &airList, const DoublyLinkedList &landingQueue,
              const vector<Plane*> &landedList, int simulationSeconds, int score) {
-    cout << "\033[2J\033[1;1H";
+    cout << "\033[2J\033[1;1H"; //ansi escape code used to clear the screen
     cout << "==== AIR TRAFFIC CONTROLLER GAME ====\n";
     cout << "Time elapsed: " << simulationSeconds << " seconds    Score: " << score << "\n";
     cout << "-------------------------------------\n";
@@ -243,10 +243,10 @@ private:
     bool gameOver;
     int score;
     int dynamicPlaneGenInterval;
-    queue<string> commandQueue;
+    queue<string> commandQueue; //for storing the commands of user in a thread safe queue
     mutex commandMutex;
-    atomic<bool> running;
-    thread userInputThread;
+    atomic<bool> running; //for controlling the running state of input thread
+    thread userInputThread; //for taking user input asynchronously
 
     void inputThreadFunc() {
         while (running.load()) {
@@ -258,21 +258,21 @@ private:
                 commandQueue.push(input);
             }
         }
-    }
+    } //this runs while simulation is running, reading a line from the user and exiting if the input fails, the user input is read continuously in a separate thread and pushed to a command queue
 
 public:
     Simulation()
         : simulationSeconds(0), planeGenTimer(0), gameOver(false),
           score(0), dynamicPlaneGenInterval(BASE_PLANE_GEN_INTERVAL), running(true)
     {
-        userInputThread = thread(&Simulation::inputThreadFunc, this);
+        userInputThread = thread(&Simulation::inputThreadFunc, this); //user input thread started bound to inputThreadFunc
     }
 
     ~Simulation() {
-        running.store(false);
+        running.store(false); 
         if (userInputThread.joinable())
             userInputThread.join();
-    }
+    }//safely stop the input thread
 
     void updateAirspace() {
         Node* curr = airList.head;
@@ -435,7 +435,7 @@ public:
                 }
             }
         }
-    }
+    }// the user command from command queue is read and differentiated and action is taken based on it. uses <sstream> header for processing the string input
 
     void displayState() {
         display(airList, landingQueue, landedList, simulationSeconds, score);
@@ -451,7 +451,7 @@ public:
              << "  4. If a plane that is not at the front of the landing queue reaches zero time to land.\n\n"
              << "Score points by landing planes safely. Avoid collisions and fuel runout.\n"
              << "Good luck!\n\n";
-        cout << "Press ENTER to start...";
+        cout << "Press ENTER twice to start...";
         cin.ignore();
 
         while (!gameOver) {
@@ -474,7 +474,7 @@ public:
 };
 
 int main() {
-    srand(static_cast<unsigned int>(time(NULL)));
+    srand(static_cast<unsigned int>(time(NULL))); //the random number generator is seeded with current time. 
     Simulation sim;
     sim.run();
     return 0;
